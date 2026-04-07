@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Token 直觉工具箱 — 理解 AI 世界的度量衡</title>
+<style>
+  :root {
+    --primary: #6366f1; --primary-light: #eef2ff; --primary-dark: #4338ca;
+    --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+    --gray-400: #94a3b8; --gray-500: #64748b; --gray-700: #334155;
+    --gray-800: #1e293b; --gray-900: #0f172a;
+    --radius: 20px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(160deg, #f0f2ff 0%, #fff 50%, #f8fafc 100%);
+    color: var(--gray-800); line-height: 1.6; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 20px;
+  }
+  .hero { text-align: center; margin-bottom: 48px; }
+  .hero-icon { font-size: 56px; margin-bottom: 16px; }
+  .hero h1 { font-size: 36px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.5px; }
+  .hero p { font-size: 16px; color: var(--gray-500); margin-top: 10px; max-width: 480px; }
+  .cards { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; max-width: 760px; }
+  .card {
+    flex: 1; min-width: 280px; max-width: 360px;
+    background: #fff; border-radius: var(--radius); padding: 36px 28px;
+    border: 1.5px solid var(--gray-200);
+    box-shadow: 0 2px 16px rgba(99,102,241,0.06);
+    text-decoration: none; color: inherit;
+    transition: all 0.25s ease;
+    cursor: pointer; position: relative; overflow: hidden;
+  }
+  .card::after {
+    content: '→'; position: absolute; bottom: 24px; right: 28px;
+    font-size: 20px; color: var(--gray-400); transition: all 0.25s;
+  }
+  .card:hover {
+    border-color: var(--primary); transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(99,102,241,0.15);
+  }
+  .card:hover::after { color: var(--primary); transform: translateX(4px); }
+  .card-icon { font-size: 40px; margin-bottom: 16px; }
+  .card h2 { font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
+  .card p { font-size: 14px; color: var(--gray-500); line-height: 1.7; }
+  .card .tag {
+    display: inline-block; margin-top: 16px; padding: 4px 12px;
+    background: var(--primary-light); color: var(--primary); border-radius: 100px;
+    font-size: 12px; font-weight: 600;
+  }
+  .footer { margin-top: 48px; text-align: center; color: var(--gray-400); font-size: 13px; }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-icon">🪙</div>
+    <h1>Token 直觉工具箱</h1>
+    <p>帮助你建立对 AI「Token」这个计量单位的数字直觉和物理意义的认知</p>
+  </div>
+  <div class="cards">
+    <a class="card" href="Token计量单位直觉建立.html">
+      <div class="card-icon">📖</div>
+      <h2>Token 直觉建立</h2>
+      <p>8 条完整换算链，从文字、GPU、电力、人力成本到资本与地缘，全方位理解 Token 的物理意义</p>
+      <span class="tag">深度研究</span>
+    </a>
+    <a class="card" href="Token换算器.html">
+      <div class="card-icon">⚖️</div>
+      <h2>Token 换算器</h2>
+      <p>选择一个物理世界的物品或任务，实时查看它消耗多少 Token、花多少钱、需要多少时间</p>
+      <span class="tag">互动工具</span>
+    </a>
+  </div>
+  <div class="footer">Made with 🤍 by Sherry · 2026</div>
+</body>
+</html>
