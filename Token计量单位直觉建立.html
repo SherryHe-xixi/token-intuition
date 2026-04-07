@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Token — 用物理世界的直觉理解AI的计量单位</title>
+<style>
+  html { scroll-behavior: smooth; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f8f9fa; color: #1a1a2e; line-height: 1.75;
+  }
+  .page-wrapper { display: flex; }
+  .sidebar {
+    position: fixed; top: 0; left: 0; width: 210px; height: 100vh;
+    background: #fff; border-right: 1px solid #e8e8ee; padding: 20px 0;
+    overflow-y: auto; z-index: 100; font-size: 13px;
+  }
+  .sidebar .logo { padding: 0 16px 16px; font-size: 15px; font-weight: 700; color: #4361ee; border-bottom: 1px solid #eee; margin-bottom: 4px; }
+  .sidebar a {
+    display: block; padding: 6px 16px 6px 20px; color: #555; text-decoration: none;
+    border-left: 3px solid transparent; transition: all 0.15s; line-height: 1.4;
+  }
+  .sidebar a:hover { background: #f0f4ff; color: #4361ee; }
+  .sidebar a.active { border-left-color: #4361ee; color: #4361ee; font-weight: 600; background: #f0f4ff; }
+  /* collapsible nav group */
+  .nav-section { border-bottom: 1px solid #f0f0f5; }
+  .nav-section:last-child { border-bottom: none; }
+  .nav-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; cursor: pointer; user-select: none;
+    font-size: 13px; font-weight: 600; color: #333; transition: background 0.15s;
+  }
+  .nav-header:hover { background: #f5f7ff; }
+  .nav-header .arrow { font-size: 10px; color: #aaa; transition: transform 0.2s; }
+  .nav-section.open .nav-header .arrow { transform: rotate(90deg); }
+  .nav-section.open .nav-header { color: #4361ee; }
+  .nav-children { display: none; padding-bottom: 4px; }
+  .nav-section.open .nav-children { display: block; }
+  .nav-children a { padding-left: 28px; font-size: 12.5px; color: #666; }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; margin-left: 210px; }
+  .header { text-align: center; margin-bottom: 52px; }
+  .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: #1a1a2e; }
+  .header .subtitle { font-size: 15px; color: #666; line-height: 1.6; }
+  .header .date { font-size: 13px; color: #999; margin-top: 6px; }
+  .section { margin-bottom: 44px; }
+  .section-title { font-size: 19px; font-weight: 700; color: #1a1a2e; border-left: 4px solid #4361ee; padding-left: 14px; margin-bottom: 18px; }
+  .section-desc { font-size: 14px; color: #666; margin: -10px 0 18px 18px; }
+  .card { background: #fff; border-radius: 12px; padding: 22px 26px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; }
+  .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: #333; }
+  .card p { font-size: 14px; color: #444; margin-bottom: 7px; }
+  .hl { display: inline-block; background: #eef2ff; color: #4361ee; padding: 1px 8px; border-radius: 5px; font-weight: 600; font-size: 13px; }
+  .analogy { background: #fff8e1; border-left: 3px solid #ffc107; padding: 10px 14px; border-radius: 0 8px 8px 0; margin-top: 12px; font-size: 13.5px; color: #5d4e00; }
+  .analogy::before { content: "💡 "; }
+  .t { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13.5px; }
+  .t th { background: #f0f4ff; text-align: left; padding: 9px 12px; font-weight: 600; color: #333; border-bottom: 2px solid #d0d9ff; }
+  .t td { padding: 9px 12px; border-bottom: 1px solid #eee; color: #444; }
+  .t tr:hover td { background: #fafbff; }
+  .t .num { font-variant-numeric: tabular-nums; font-weight: 600; color: #333; }
+  .t .dim { color: #999; font-size: 12px; }
+  .t .cat { background: #f8f9ff; font-weight: 600; color: #4361ee; font-size: 12px; letter-spacing: 0.5px; }
+  .chain { display: flex; align-items: stretch; gap: 0; margin: 14px 0; flex-wrap: wrap; }
+  .chain-node { flex: 1; min-width: 110px; text-align: center; padding: 12px 8px; background: #fff; border: 1px solid #e0e4f0; }
+  .chain-node:first-child { border-radius: 10px 0 0 10px; }
+  .chain-node:last-child { border-radius: 0 10px 10px 0; }
+  .chain-node .cn-label { font-size: 10.5px; color: #888; margin-bottom: 3px; }
+  .chain-node .cn-value { font-size: 15px; font-weight: 700; color: #4361ee; }
+  .chain-node .cn-unit { font-size: 10.5px; color: #666; margin-top: 2px; }
+  .chain-arrow { width: 26px; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 16px; flex-shrink: 0; }
+  .meter-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; }
+  .meter-label { width: 130px; text-align: right; color: #555; flex-shrink: 0; }
+  .meter-bar-bg { flex: 1; background: #eee; border-radius: 6px; height: 20px; overflow: hidden; }
+  .meter-bar { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; color: #fff; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+  .meter-value { width: 120px; text-align: left; color: #333; font-weight: 500; flex-shrink: 0; font-size: 12px; }
+  .price-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin: 10px 0; }
+  .price-card { background: #f8f9ff; border-radius: 10px; padding: 12px; border: 1px solid #e8ecff; text-align: center; }
+  .price-card .model-name { font-weight: 700; font-size: 13px; color: #333; margin-bottom: 2px; }
+  .price-card .price-tag { font-size: 17px; font-weight: 700; color: #4361ee; }
+  .price-card .price-unit { font-size: 10.5px; color: #888; }
+  .callout { background: linear-gradient(135deg, #667eea08, #764ba210); border: 1px solid #d0d9ff; border-radius: 12px; padding: 16px 20px; margin: 16px 0; }
+  .callout h4 { font-size: 14px; color: #4361ee; margin-bottom: 5px; }
+  .callout p { font-size: 13.5px; color: #444; }
+  .xref { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px; }
+  .xref th { background: #4361ee; color: #fff; padding: 8px 10px; text-align: center; font-weight: 600; font-size: 11.5px; }
+  .xref td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: center; }
+  .xref tr:nth-child(even) td { background: #fafbff; }
+  .xref .task-name { text-align: left; font-weight: 600; color: #333; }
+  .xref .em { color: #4361ee; font-weight: 700; }
+  .stack-bar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; margin: 8px 0; font-size: 11px; font-weight: 600; }
+  .stack-bar > div { display: flex; align-items: center; justify-content: center; color: #fff; }
+  .note { font-size: 12px; color: #999; margin-top: 6px; }
+  .footer { text-align: center; color: #aaa; font-size: 12px; margin-top: 48px; padding-top: 24px; border-top: 1px solid #eee; }
+  .tab-buttons { display: flex; gap: 0; border-bottom: 2px solid #eee; margin-bottom: 14px; }
+  .tab-btn { padding: 7px 16px; font-size: 13px; font-weight: 500; color: #888; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+  .tab-btn.active { color: #4361ee; border-bottom-color: #4361ee; font-weight: 600; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .separator { border: none; border-top: 1px dashed #ddd; margin: 16px 0; }
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .container { margin-left: 0; }
+  }
+  @media (max-width: 640px) {
+    .price-grid { grid-template-columns: 1fr 1fr; }
+    .chain { flex-direction: column; align-items: center; }
+    .chain-arrow { transform: rotate(90deg); width: auto; height: 20px; }
+    .chain-node { min-width: 200px; width: 100%; border-radius: 8px !important; }
+    .meter-label { width: 90px; font-size: 11.5px; }
+  }
+</style>
+</head>
+<body>
+<nav class="sidebar" id="sidebar">
+  <div class="logo">Token 度量衡</div>
+
+  <div class="nav-section open">
+    <div class="nav-header" onclick="toggleNav(this)">基础 <span class="arrow">▶</span></div>
+    <div class="nav-children">
+      <a href="#anchor">Token 是什么</a>
+      <a href="#chain1">① 文本量</a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <div class="nav-header" onclick="toggleNav(this)">生产成本 <span class="arrow">▶</span></div>
+    <div class="nav-children">
+      <a href="#chain2">② 电 → GPU → 定价</a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <div class="nav-header" onclick="toggleNav(this)">消费场景 <span class="arrow">▶</span></div>
+    <div class="nav-children">
+      <a href="#chain3">③ 文本任务</a>
+      <a href="#chain3-multi">③ 图片 & 视频</a>
+      <a href="#chain3-live">③ 直播 & 实时</a>
+      <a href="#chain4">④ 订阅包价值</a>
+      <a href="#chain5">⑤ 等价人力</a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <div class="nav-header" onclick="toggleNav(this)">效率 & 规模 <span class="arrow">▶</span></div>
+    <div class="nav-children">
+      <a href="#chain6">⑥ 速度 & 时间</a>
+      <a href="#chain7">⑦ 全球规模</a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <div class="nav-header" onclick="toggleNav(this)">资本 & 地缘 <span class="arrow">▶</span></div>
+    <div class="nav-children">
+      <a href="#chain8">⑧ 头部公司投入</a>
+      <a href="#chain8-country">⑧ 国家算力版图</a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <div class="nav-header" onclick="toggleNav(this)">Token ≠ Token <span class="arrow">▶</span></div>
+    <div class="nav-children">
+      <a href="#dim-model">模型等级</a>
+      <a href="#dim-io">输入 vs 输出</a>
+      <a href="#dim-thinking">思考 Token</a>
+      <a href="#dim-context">上下文窗口</a>
+      <a href="#dim-deflation">通缩曲线</a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <div class="nav-header" onclick="toggleNav(this)">综合 <span class="arrow">▶</span></div>
+    <div class="nav-children">
+      <a href="#xref">全景交叉表</a>
+      <a href="#trend">趋势</a>
+      <a href="#summary">总结</a>
+    </div>
+  </div>
+</nav>
+<div class="container">
+
+<div class="header">
+  <h1>Token — AI 世界的基本度量衡</h1>
+  <div class="subtitle">8 条完整换算链 + Token 的隐藏维度 + GPU 成本拆解 + 多模态 + 资本与地缘</div>
+  <div class="date">调研日期：2026年4月7日 · v6</div>
+</div>
+
+<!-- ===== CHAIN 0: Anchor ===== -->
+<div class="section" id="anchor">
+  <div class="section-title">锚点：Token 是什么？</div>
+  <div class="card">
+    <p>Token 是大模型处理文本的最小单位——不完全等于"字"或"词"，更像模型眼中的"音节"。</p>
+    <table class="t">
+      <tr><th>语言</th><th>1 Token ≈</th><th>举例</th></tr>
+      <tr><td>英文</td><td>约 4 个字母（¾ 个单词）</td><td>"machine" = 1 token</td></tr>
+      <tr><td>中文</td><td>约 0.5~1 个汉字</td><td>"机器学习" ≈ 4 tokens（比英文多 ~50%）</td></tr>
+    </table>
+    <div class="analogy"><strong>核心锚点：1,000 tokens ≈ 750 英文词 ≈ 500 汉字 ≈ 一页 A4 纸。</strong></div>
+  </div>
+</div>
+
+<!-- ===== CHAIN 1: Text Size ===== -->
+<div class="section" id="chain1">
+  <div class="section-title">链条 ① Token → 文本量（大小感知）</div>
+  <div class="card">
+    <table class="t">
+      <tr><th>Token 量</th><th>≈ 文本量</th><th>生活类比</th></tr>
+      <tr><td class="num">50</td><td>一条微信消息</td><td>30 汉字</td></tr>
+      <tr><td class="num">300</td><td>一条朋友圈 / 一条小红书文案</td><td>~200 汉字</td></tr>
+      <tr><td class="num">1,000</td><td>一页 A4 纸</td><td>500 汉字 / 750 英文词</td></tr>
+      <tr><td class="num">5,000</td><td>一篇公众号长文</td><td>~3,000 汉字</td></tr>
+      <tr><td class="num">30,000</td><td>一本小册子 / 40 页</td><td>~20,000 汉字</td></tr>
+      <tr><td class="num">100,000</td><td>一本 300 页平装书</td><td>Claude/GPT 单次上下文窗口</td></tr>
+      <tr><td class="num">1,000,000</td><td>10 本书 / 一个代码库</td><td>Gemini 2.5 Pro 上下文窗口</td></tr>
+      <tr><td class="num">~10<sup>13</sup></td><td>人类全部出版物</td><td>~1.3 亿本书</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== CHAIN 2: Energy → GPU → Cost (RESTRUCTURED) ===== -->
+<div class="section" id="chain2">
+  <div class="section-title">链条 ② Token 的真实生产成本（从电到 GPU 到定价）</div>
+  <div class="section-desc">电费只是冰山一角。真正的大头是 GPU 折旧——一块芯片 ¥25 万，用 3 年就得换。</div>
+
+  <div class="card">
+    <h3>一块 H100 GPU 的成本拆解</h3>
+    <p>NVIDIA H100 是当前 AI 推理的主力芯片。我们以一块 H100 运行 24 小时来看它的成本结构：</p>
+    <table class="t">
+      <tr><th>成本项</th><th>每小时</th><th>占比</th><th>说明</th></tr>
+      <tr><td>GPU 硬件折旧</td><td class="num">$1.33</td><td class="num" style="color:#4361ee;">53%</td><td>购价 ~$35,000 ÷ 3 年 ÷ 8,760 小时</td></tr>
+      <tr><td>数据中心基建</td><td class="num">$0.40</td><td class="num">16%</td><td>机柜、网络、冷却设备折旧</td></tr>
+      <tr><td>人员与运维</td><td class="num">$0.32</td><td class="num">13%</td><td>工程师、安全、监控</td></tr>
+      <tr><td>利润</td><td class="num">$0.40</td><td class="num">16%</td><td>云厂商 / API 服务商利润</td></tr>
+      <tr><td style="color:#22c55e;">电费</td><td class="num" style="color:#22c55e;">$0.05</td><td class="num" style="color:#22c55e;">2%</td><td style="color:#22c55e;">700W × $0.05/kWh + 冷却 PUE 1.3</td></tr>
+      <tr style="font-weight:700; background:#f8f9ff;"><td>合计（≈ 云租赁价）</td><td class="num">$2.50/hr</td><td>100%</td><td>市场平均 $2-3.5/hr</td></tr>
+    </table>
+
+    <div class="stack-bar">
+      <div style="width:53%; background:#4361ee;" title="GPU折旧">GPU 折旧 53%</div>
+      <div style="width:16%; background:#7c3aed;" title="基建">基建</div>
+      <div style="width:13%; background:#ec4899;" title="人员">人员</div>
+      <div style="width:16%; background:#f59e0b;" title="利润">利润</div>
+      <div style="width:2%; background:#22c55e;" title="电费"></div>
+    </div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:#666; margin-top:4px;">
+      <span><span style="color:#4361ee;">■</span> GPU 折旧 53%</span>
+      <span><span style="color:#7c3aed;">■</span> 基建 16%</span>
+      <span><span style="color:#ec4899;">■</span> 人员 13%</span>
+      <span><span style="color:#f59e0b;">■</span> 利润 16%</span>
+      <span><span style="color:#22c55e;">■</span> 电费 2%</span>
+    </div>
+
+    <div class="analogy"><strong>关键发现：GPU 硬件折旧占 53%，电费只占 2%。</strong>比喻：就像开出租车，最大的成本不是油钱，而是车辆折旧、保险和司机工资。AI 的"油钱"（电费）几乎可以忽略。</div>
+  </div>
+
+  <div class="card">
+    <h3>从 GPU 到每百万 Token 的成本堆叠</h3>
+    <p>一块 H100 对大型前沿模型（~200B 参数）的有效推理吞吐约 1,000 tokens/秒：</p>
+
+    <div class="chain">
+      <div class="chain-node">
+        <div class="cn-label">1块 H100</div>
+        <div class="cn-value">$2.50/hr</div>
+        <div class="cn-unit">云租赁价</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">产出（大模型）</div>
+        <div class="cn-value">3.6M</div>
+        <div class="cn-unit">tokens/小时</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">GPU 原始成本</div>
+        <div class="cn-value">$0.70</div>
+        <div class="cn-unit">每百万 tokens</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">+ 研发分摊</div>
+        <div class="cn-value">~$3–5</div>
+        <div class="cn-unit">每百万 tokens</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">API 售价</div>
+        <div class="cn-value">$15</div>
+        <div class="cn-unit">Claude Sonnet 输出</div>
+      </div>
+    </div>
+
+    <table class="t" style="margin-top: 12px;">
+      <tr><th>成本层</th><th>每百万 tokens 成本</th><th>说明</th></tr>
+      <tr><td style="color:#22c55e;">纯电费</td><td class="num" style="color:#22c55e;">$0.0004 (¥0.003)</td><td>几乎为零</td></tr>
+      <tr><td style="color:#4361ee;">GPU 算力（租赁）</td><td class="num" style="color:#4361ee;">$0.70 (¥5)</td><td>最大单项成本</td></tr>
+      <tr><td>+ 模型研发分摊</td><td class="num">$2–4</td><td>训练成本数亿美元，分摊到数万亿 tokens</td></tr>
+      <tr><td>+ 安全/运维/带宽</td><td class="num">$1–2</td><td></td></tr>
+      <tr style="font-weight:700; background:#f0f4ff;"><td>API 终端售价</td><td class="num">$3–15</td><td>取决于模型大小（Haiku vs Opus）</td></tr>
+    </table>
+    <div class="analogy"><strong>完整链：</strong>电 → GPU → 研发 → API。100 万 tokens 的电费 ¥0.003，GPU 成本 ¥5，API 卖 ¥20–108。GPU 折旧是电费的 <strong>1,700 倍</strong>，才是 Token 定价的真正锚。</div>
+  </div>
+
+  <div class="card">
+    <h3>GPU 折旧换算成 Token 是什么概念？</h3>
+    <table class="t">
+      <tr><th>GPU 资产</th><th>价格</th><th>≈ 可产出 Token（3年寿命）</th><th>≈ 等于</th></tr>
+      <tr><td>1 块 H100</td><td class="num">$35,000 (¥25万)</td><td class="num">~95 万亿 tokens</td><td>≈ 全人类出版物的 1/10</td></tr>
+      <tr><td>8 卡服务器（1台）</td><td class="num">$280,000 (¥200万)</td><td class="num">~760 万亿 tokens</td><td>≈ 全人类出版物</td></tr>
+      <tr><td>1,000 台集群</td><td class="num">$2.8亿 (¥20亿)</td><td class="num">~760 京 tokens</td><td>≈ 全人类出版物 × 1,000</td></tr>
+    </table>
+    <div class="analogy"><strong>直觉：</strong>一块 ¥25 万的 GPU 芯片，3 年寿命内能"打"出相当于全人类出版物 1/10 的文字量。而一台 ¥200 万的 8 卡服务器，3 年能产出约等于人类全部书籍的 Token 量。</div>
+  </div>
+</div>
+
+<!-- ===== CHAIN 3: Task Types (EXPANDED) ===== -->
+<div class="section" id="chain3">
+  <div class="section-title">链条 ③ Token → 任务消耗（文本 + 多模态 + 职业场景）</div>
+  <div class="section-desc">不只是"问答"和"写邮件"——覆盖 PM、运营、创作者、开发者的真实工作场景。</div>
+
+  <div class="card">
+    <h3>文本任务</h3>
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchTab(event,'tab-daily')">日常场景</button>
+      <button class="tab-btn" onclick="switchTab(event,'tab-career')">职业场景</button>
+    </div>
+
+    <div id="tab-daily" class="tab-content active">
+      <table class="t">
+        <tr><th>任务</th><th>Token 量</th><th>≈ 页数</th><th>AI 用时</th><th>API 成本</th></tr>
+        <tr><td>简单问答</td><td class="num">500</td><td>半页</td><td>4 秒</td><td class="num">¥0.04</td></tr>
+        <tr><td>翻译一页文档</td><td class="num">2,000</td><td>2 页</td><td>13 秒</td><td class="num">¥0.13</td></tr>
+        <tr><td>写一封商务邮件</td><td class="num">3,000</td><td>3 页</td><td>30 秒</td><td class="num">¥0.28</td></tr>
+        <tr><td>总结一篇万字长文</td><td class="num">8,000</td><td>8 页</td><td>25 秒</td><td class="num">¥0.35</td></tr>
+        <tr><td>深度研究报告</td><td class="num">27,000</td><td>27 页</td><td>4 分钟</td><td class="num">¥2.30</td></tr>
+        <tr><td>长文档多轮对话</td><td class="num">100,000+</td><td>100 页</td><td>20+ 分钟</td><td class="num">¥8+</td></tr>
+      </table>
+    </div>
+
+    <div id="tab-career" class="tab-content">
+      <table class="t">
+        <tr><th>职业</th><th>任务</th><th>Token 量</th><th>API 成本</th><th>等价人力成本</th></tr>
+        <tr><td class="cat" colspan="5">产品经理</td></tr>
+        <tr><td></td><td>写一份 PRD（产品需求文档）</td><td class="num">15,000</td><td class="num">¥1.50</td><td>¥1,500–3,000</td></tr>
+        <tr><td></td><td>竞品分析报告</td><td class="num">27,000</td><td class="num">¥2.30</td><td>¥2,000–5,000</td></tr>
+        <tr><td></td><td>用户故事拆解（10 个 story）</td><td class="num">8,000</td><td class="num">¥0.70</td><td>¥500–1,000</td></tr>
+        <tr><td class="cat" colspan="5">运营 / 内容创作</td></tr>
+        <tr><td></td><td>小红书种草文案</td><td class="num">1,000</td><td class="num">¥0.10</td><td>¥200–500</td></tr>
+        <tr><td></td><td>抖音短视频脚本（1分钟）</td><td class="num">2,000</td><td class="num">¥0.18</td><td>¥300–800</td></tr>
+        <tr><td></td><td>公众号深度文章</td><td class="num">8,000</td><td class="num">¥0.70</td><td>¥800–2,000</td></tr>
+        <tr><td></td><td>一周社媒排期（7 天内容）</td><td class="num">12,000</td><td class="num">¥1.00</td><td>¥1,500–3,000</td></tr>
+        <tr><td class="cat" colspan="5">数据分析</td></tr>
+        <tr><td></td><td>SQL 查询 + 结果解读</td><td class="num">3,000</td><td class="num">¥0.28</td><td>¥300–600</td></tr>
+        <tr><td></td><td>数据可视化 Dashboard 设计</td><td class="num">10,000</td><td class="num">¥0.90</td><td>¥1,000–2,000</td></tr>
+        <tr><td></td><td>A/B 测试分析报告</td><td class="num">15,000</td><td class="num">¥1.30</td><td>¥1,500–3,000</td></tr>
+        <tr><td class="cat" colspan="5">软件开发</td></tr>
+        <tr><td></td><td>写一个 API 接口</td><td class="num">10,000</td><td class="num">¥0.90</td><td>¥1,000–2,000</td></tr>
+        <tr><td class="cat" colspan="5">🤖 AI 编程（Claude Code）具体产出</td></tr>
+        <tr><td></td><td>做一个落地页网站</td><td class="num">80,000</td><td class="num">¥7.20</td><td>¥3,000–6,000</td></tr>
+        <tr><td></td><td>重构一个代码模块</td><td class="num">150,000</td><td class="num">¥13.50</td><td>¥5,000–10,000</td></tr>
+        <tr><td></td><td>做一个小工具 App</td><td class="num">200,000</td><td class="num">¥18.00</td><td>¥8,000–15,000</td></tr>
+        <tr><td></td><td>全栈小项目（前后端 + 数据库）</td><td class="num">500,000</td><td class="num">¥43.00</td><td>¥15,000–30,000</td></tr>
+      </table>
+      <p class="note">API 成本基于 Claude Sonnet ($3/$15/M)。等价人力成本基于中国市场自由职业/外包中位价。</p>
+    </div>
+  </div>
+
+  <div class="card" id="chain3-multi">
+    <h3>多模态任务：图片和视频</h3>
+    <p>图像和视频生成不使用传统 Token 计价，但可以换算成等价 Token 成本进行对比：</p>
+    <table class="t">
+      <tr><th>任务</th><th>直接费用</th><th>≈ 等价 Token<br><span class="dim">按 Sonnet 输出价换算</span></th><th>人工/传统成本</th><th>倍率</th></tr>
+      <tr><td class="cat" colspan="5">AI 生图</td></tr>
+      <tr>
+        <td>DALL-E 3 生成 1 张图</td>
+        <td class="num">$0.04 (¥0.3)</td>
+        <td class="num">≈ 2,700 tokens</td>
+        <td>设计师 ¥200–500/张</td>
+        <td class="em">700–1,700×</td>
+      </tr>
+      <tr>
+        <td>Midjourney 高质量 1 张</td>
+        <td class="num">$0.08 (¥0.6)</td>
+        <td class="num">≈ 5,300 tokens</td>
+        <td>设计师 ¥200–500/张</td>
+        <td class="em">350–850×</td>
+      </tr>
+      <tr>
+        <td>小红书种草图 × 9 宫格</td>
+        <td class="num">$0.36 (¥2.6)</td>
+        <td class="num">≈ 24,000 tokens</td>
+        <td>摄影+修图 ¥500–2,000</td>
+        <td class="em">200–770×</td>
+      </tr>
+      <tr><td class="cat" colspan="5">AI 生视频</td></tr>
+      <tr>
+        <td>Kling 3.0 生成 1 分钟视频</td>
+        <td class="num">$4.20 (¥30)</td>
+        <td class="num">≈ 28 万 tokens</td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Runway Gen-4 生成 1 分钟</td>
+        <td class="num">$9–12 (¥65–86)</td>
+        <td class="num">≈ 60–80 万 tokens</td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><strong>抖音创作者拍 1 分钟视频</strong></td>
+        <td class="num" style="color:#e63946;">—</td>
+        <td class="num">—</td>
+        <td>¥500–5,000<br><span class="dim">（拍摄+剪辑+字幕）</span></td>
+        <td></td>
+      </tr>
+    </table>
+    <div class="analogy"><strong>视频类比：</strong>AI 生成 1 分钟视频（¥30–86）vs 人工拍摄剪辑 1 分钟视频（¥500–5,000），成本差 <strong>10–170 倍</strong>。但目前 AI 视频质量与真人拍摄仍有明显差距，所以这个倍数会随着质量提升而进一步扩大。<br><br>
+    另外注意：<strong>1 分钟 AI 视频 ≈ 28–80 万 tokens 等价成本</strong>，相当于文本世界里做 10–30 次深度研究。视频是最"烧"算力的模态。</div>
+  </div>
+
+  <div class="card" id="chain3-live">
+    <h3>实时/直播任务：语音对话、同声传译、数字人直播</h3>
+    <p>实时场景的独特之处：<strong>按"分钟"持续消耗</strong>，而不是一次性任务。这让成本逻辑和前面的文本/视频完全不同。</p>
+    <table class="t">
+      <tr><th>任务</th><th>AI 费用</th><th>≈ 等价 Token<br><span class="dim">按 Sonnet 输出价换算</span></th><th>人工/传统成本</th><th>倍率</th></tr>
+      <tr><td class="cat" colspan="5">AI 语音对话（Realtime API）</td></tr>
+      <tr>
+        <td>GPT-4o 语音对话 1 分钟</td>
+        <td class="num">$0.30 (¥2.2)<br><span class="dim">音频入 $0.06 + 出 $0.24</span></td>
+        <td class="num">≈ 2 万 tokens</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>AI 语音客服 1 小时</td>
+        <td class="num">$18 (¥130)</td>
+        <td class="num">≈ 120 万 tokens</td>
+        <td>人工客服 ¥50–100/h</td>
+        <td class="em" style="color:#e63946;">0.8–2.6×<br><span class="dim" style="color:#e63946;">AI 暂时更贵！</span></td>
+      </tr>
+      <tr><td class="cat" colspan="5">AI 同声传译</td></tr>
+      <tr>
+        <td>AI 实时翻译 1 小时（会议）</td>
+        <td class="num">~$10–30 (¥72–216)<br><span class="dim">Wordly / 自建方案</span></td>
+        <td class="num">≈ 70–200 万 tokens</td>
+        <td>人工同传 ¥3,000–6,000/h<br><span class="dim">（需 2 人轮替 + 设备）</span></td>
+        <td class="em">15–600×</td>
+      </tr>
+      <tr><td class="cat" colspan="5">AI 数字人直播</td></tr>
+      <tr>
+        <td>数字人直播 1 小时（电商）</td>
+        <td class="num">$2–8 (¥15–58)<br><span class="dim">BocaLive / Virbo 等平台</span></td>
+        <td class="num">≈ 13–39 万 tokens</td>
+        <td>真人主播 ¥200–1,000/h<br><span class="dim">（含底薪+佣金+场地）</span></td>
+        <td class="em">3–70×</td>
+      </tr>
+      <tr>
+        <td>数字人直播 24h 不间断/月</td>
+        <td class="num">$58–180/月 (¥420–1,300)</td>
+        <td class="num">—</td>
+        <td>真人三班倒 ¥30,000+/月<br><span class="dim">（3 组主播+场地）</span></td>
+        <td class="em">23–70×</td>
+      </tr>
+    </table>
+    <div class="analogy">
+      <strong>实时场景的独特规律：</strong><br>
+      ① <strong>语音对话是目前 AI 唯一"不够便宜"的模态</strong>——音频 token 比文字贵 20 倍（$200/M vs $15/M），AI 客服的成本已接近甚至高于人工客服。这是因为实时语音需要持续占用 GPU，利用率极低。<br>
+      ② <strong>同声传译是 AI 优势最大的实时场景</strong>——省掉了 2 名高薪译员 + 专业设备的成本，倍率可达 15–600×。<br>
+      ③ <strong>数字人直播的核心优势不是"便宜"而是"24 小时在线"</strong>——一个数字人可以全天不间断直播，凌晨 3 点也能接单，这是人类主播无法做到的。
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHAIN 4: API → Task Cost → Subscription ===== -->
+<div class="section" id="chain4">
+  <div class="section-title">链条 ④ 订阅包能做多少事？</div>
+  <div class="section-desc">从 API 单价，到"$20/月的会员每天能干什么"。</div>
+
+  <div class="card">
+    <h3>API 定价速览（2026年4月）</h3>
+    <div class="price-grid">
+      <div class="price-card">
+        <div class="model-name">Claude Sonnet</div>
+        <div class="price-tag">$3/$15</div>
+        <div class="price-unit">入/出 · 百万 Token</div>
+      </div>
+      <div class="price-card">
+        <div class="model-name">GPT-5.2</div>
+        <div class="price-tag">$1.75/$14</div>
+        <div class="price-unit">入/出 · 百万 Token</div>
+      </div>
+      <div class="price-card">
+        <div class="model-name">Gemini 2.5 Pro</div>
+        <div class="price-tag">$1.25/$10</div>
+        <div class="price-unit">入/出 · 百万 Token</div>
+      </div>
+      <div class="price-card">
+        <div class="model-name">Claude Haiku</div>
+        <div class="price-tag">$0.25/$1.25</div>
+        <div class="price-unit">入/出 · 百万 Token</div>
+      </div>
+    </div>
+    <p class="note">输出 token 比输入贵 3~8 倍——生成比理解消耗更多算力。</p>
+  </div>
+
+  <div class="card">
+    <h3>$20/月（¥145）能做什么？</h3>
+    <p>以 Claude Pro / ChatGPT Plus 为例，按 API 等价成本估算"含金量"：</p>
+    <div style="margin: 14px 0;">
+      <div class="meter-row">
+        <span class="meter-label">简单问答</span>
+        <div class="meter-bar-bg"><div class="meter-bar" style="width:100%; background:#4cc9f0;">~3,500 次</div></div>
+        <span class="meter-value">每天 ~120 次</span>
+      </div>
+      <div class="meter-row">
+        <span class="meter-label">小红书文案</span>
+        <div class="meter-bar-bg"><div class="meter-bar" style="width:60%; background:#06b6d4;">~1,400 条</div></div>
+        <span class="meter-value">每天 ~47 条</span>
+      </div>
+      <div class="meter-row">
+        <span class="meter-label">写邮件</span>
+        <div class="meter-bar-bg"><div class="meter-bar" style="width:40%; background:#4361ee;">~500 封</div></div>
+        <span class="meter-value">每天 ~17 封</span>
+      </div>
+      <div class="meter-row">
+        <span class="meter-label">总结长文</span>
+        <div class="meter-bar-bg"><div class="meter-bar" style="width:22%; background:#7209b7;">~400 篇</div></div>
+        <span class="meter-value">每天 ~13 篇</span>
+      </div>
+      <div class="meter-row">
+        <span class="meter-label">写 PRD</span>
+        <div class="meter-bar-bg"><div class="meter-bar" style="width:10%; background:#a855f7; min-width:70px;">~95 份</div></div>
+        <span class="meter-value">每天 ~3 份</span>
+      </div>
+      <div class="meter-row">
+        <span class="meter-label">深度研究</span>
+        <div class="meter-bar-bg"><div class="meter-bar" style="width:6%; background:#e63946; min-width:70px;">~60 次</div></div>
+        <span class="meter-value">每天 ~2 次</span>
+      </div>
+      <div class="meter-row">
+        <span class="meter-label">复杂代码模块</span>
+        <div class="meter-bar-bg"><div class="meter-bar" style="width:3%; background:#b5179e; min-width:70px;">~30 次</div></div>
+        <span class="meter-value">隔天 ~1 次</span>
+      </div>
+    </div>
+    <p class="note">实际受消息条数限制（Claude Pro ~45条/5h, ChatGPT Plus ~160条/3h），重度用户可能先触及条数上限。</p>
+    <div class="analogy"><strong>人力对比：</strong>如果把 ¥145/月全部用于写小红书种草文案（1,400 条），等价于聘请一位 ¥28 万~70 万/月的全职文案团队。当然你不会只做一件事，但这展示了 Token 经济学的杠杆率。</div>
+  </div>
+</div>
+
+<!-- ===== CHAIN 5: Human Labor Comparison ===== -->
+<div class="section" id="chain5">
+  <div class="section-title">链条 ⑤ Token → 等价人力成本（价值链）</div>
+  <div class="card">
+    <table class="t">
+      <tr><th>任务</th><th>AI 成本<br><span class="dim">Claude Sonnet API</span></th><th>人工成本<br><span class="dim">市场中位价</span></th><th>倍率</th></tr>
+      <tr><td>翻译 1,000 词</td><td class="num">¥0.13</td><td>¥750–2,000</td><td class="em">5,000–15,000×</td></tr>
+      <tr><td>写 1 篇博客</td><td class="num">¥0.28</td><td>¥350–1,500</td><td class="em">1,200–5,000×</td></tr>
+      <tr><td>小红书种草文案 × 10</td><td class="num">¥1.00</td><td>¥2,000–5,000</td><td class="em">2,000–5,000×</td></tr>
+      <tr><td>抖音脚本 × 5</td><td class="num">¥0.90</td><td>¥1,500–4,000</td><td class="em">1,700–4,400×</td></tr>
+      <tr><td>竞品分析</td><td class="num">¥2.30</td><td>¥2,000–5,000</td><td class="em">900–2,200×</td></tr>
+      <tr><td>AI 生图 × 10 张</td><td class="num">¥3.00</td><td>¥2,000–5,000</td><td class="em">700–1,700×</td></tr>
+      <tr><td>AI 生 1 分钟视频</td><td class="num">¥30–86</td><td>¥500–5,000</td><td class="em">6–170×</td></tr>
+      <tr><td colspan="4" class="cat">🤖 AI 编程（Claude Code）</td></tr>
+      <tr><td>做一个落地页网站</td><td class="num">¥7.20</td><td>¥3,000–6,000</td><td class="em">420–830×</td></tr>
+      <tr><td>做一个小工具 App</td><td class="num">¥18</td><td>¥8,000–15,000</td><td class="em">440–830×</td></tr>
+      <tr><td>全栈小项目</td><td class="num">¥43</td><td>¥15,000–30,000</td><td class="em">350–700×</td></tr>
+      <tr><td colspan="4" class="cat">🎙️ 实时交互 / 直播</td></tr>
+      <tr><td>AI 语音客服 1 小时</td><td class="num">¥130</td><td>¥50–100</td><td style="color:#c44;font-weight:600;">0.5–2.6× ⚠️</td></tr>
+      <tr><td>AI 同声传译 1 小时</td><td class="num">¥72–216</td><td>¥3,000–6,000</td><td class="em">15–80×</td></tr>
+      <tr><td>数字人直播 24h/月</td><td class="num">¥420–1,300</td><td>¥30,000+</td><td class="em">23–71×</td></tr>
+    </table>
+    <div class="analogy"><strong>规律：</strong>纯文字任务 AI 便宜 <strong>1,000–10,000 倍</strong>，图片 <strong>700–1,700 倍</strong>，AI 编程 <strong>350–830 倍</strong>（¥7 做一个落地页、¥43 做一个全栈项目），视频 <strong>6–170 倍</strong>。实时互动中，同传和数字人直播 AI 优势明显（15–80×），但<strong>语音客服是唯一 AI 尚未比人工便宜的场景</strong>（音频 token 价格是文字的 20 倍）。</div>
+  </div>
+</div>
+
+<!-- ===== CHAIN 6: Speed ===== -->
+<div class="section" id="chain6">
+  <div class="section-title">链条 ⑥ Token → 速度 → 时间（时间链）</div>
+  <div class="card">
+    <h3>模型的"打字速度"</h3>
+    <table class="t">
+      <tr><th>模型</th><th>输出速度</th><th>≈ 人类类比</th></tr>
+      <tr><td>Claude Sonnet</td><td class="num">~80 tokens/秒</td><td>= 每秒 50 汉字 = 12 倍人类阅读速度</td></tr>
+      <tr><td>GPT-4o</td><td class="num">~90 tokens/秒</td><td>= 每秒 60 汉字</td></tr>
+      <tr><td>Gemini Flash</td><td class="num">~250 tokens/秒</td><td>= 每秒一页 A4 的 1/4</td></tr>
+      <tr><td>极速小模型</td><td class="num">~400–760 tokens/秒</td><td>= 每秒接近一页 A4</td></tr>
+    </table>
+    <div class="analogy"><strong>产能对比：</strong>Claude Sonnet 一分钟产出 ~4,800 tokens（≈ 3,000 汉字），一位专业翻译全天产出 ~5,000 词。一个 AI 模型实例的产能 ≈ <strong>300 个翻译同时工作</strong>。</div>
+  </div>
+</div>
+
+<!-- ===== CHAIN 7: Global Scale ===== -->
+<div class="section" id="chain7">
+  <div class="section-title">链条 ⑦ Token → 全球规模（宏观感知）</div>
+  <div class="card">
+    <table class="t">
+      <tr><th>平台</th><th>规模</th></tr>
+      <tr><td>Google 全平台</td><td class="num">1.3 千万亿 tokens/月（≈ 43 万亿/天）</td></tr>
+      <tr><td>ChatGPT</td><td class="num">25 亿次提问/天 → ≈ 5–10 万亿 tokens/天</td></tr>
+      <tr><td>Claude</td><td class="num">250 亿次 API 调用/月 → ≈ 数万亿/天</td></tr>
+      <tr style="background:#f0f4ff;"><td><strong>全球总计</strong></td><td class="num" style="color:#4361ee;"><strong>~100 万亿 tokens/天 (~10<sup>14</sup>)</strong></td></tr>
+    </table>
+
+    <div class="chain" style="margin-top:16px;">
+      <div class="chain-node">
+        <div class="cn-label">日产量</div>
+        <div class="cn-value">~100T</div>
+        <div class="cn-unit">tokens/天</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">年耗电 (IEA)</div>
+        <div class="cn-value">~90 TWh</div>
+        <div class="cn-unit">AI 专用算力</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">≈ 占用 GPU</div>
+        <div class="cn-value">~320 万块</div>
+        <div class="cn-unit">H100 等效</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">GPU 资产价值</div>
+        <div class="cn-value">~$1,120 亿</div>
+        <div class="cn-unit">≈ ¥8,000 亿</div>
+      </div>
+    </div>
+    <p class="note">GPU 数量估算：90 TWh ÷ (0.7kW × 8,760h) = ~1,470 万块（含冗余），按利用率 ~45% 折算为 ~320 万块有效运行。资产价值 = 320 万 × $35,000。</p>
+    <div class="analogy"><strong>震撼类比：</strong>人类全部出版物 ≈ 10 万亿 tokens。全球 AI <strong>一天</strong>的产出 ≈ 人类数千年出版总量的 <strong>10 倍</strong>。支撑这个产能的是价值 ¥8,000 亿的 GPU 芯片——比很多国家的年度军费还高。</div>
+  </div>
+</div>
+
+<!-- ===== CHAIN 8: Capital & Geo ===== -->
+<div class="section" id="chain8">
+  <div class="section-title">链条 ⑧ Token → 资本与地缘（谁在生产 Token？）</div>
+  <div class="section-desc">链条 ⑦ 回答了"全球有多少 Token"，这条回答"这些 Token 是谁、在哪里生产的"。</div>
+
+  <div class="card">
+    <h3>头部公司 AI 基建投入（2025 → 2026）</h3>
+    <table class="t">
+      <tr><th>公司</th><th>2025 CapEx</th><th>2026 CapEx（计划）</th><th>≈ 能买多少 H100</th><th>≈ 占全球 GPU 新增</th></tr>
+      <tr><td>Amazon (AWS)</td><td class="num">$100B</td><td class="num">$200B</td><td>~570 万块</td><td class="em">~28%</td></tr>
+      <tr><td>Alphabet (Google)</td><td class="num">$75B</td><td class="num">$175–185B</td><td>~510 万块</td><td class="em">~25%</td></tr>
+      <tr><td>Microsoft</td><td class="num">$80B</td><td class="num">$120B+</td><td>~340 万块</td><td class="em">~17%</td></tr>
+      <tr><td>Meta</td><td class="num">$60B</td><td class="num">$115–135B</td><td>~360 万块</td><td class="em">~18%</td></tr>
+      <tr><td>Oracle</td><td class="num">$20B</td><td class="num">$50B</td><td>~140 万块</td><td class="em">~7%</td></tr>
+      <tr style="background:#f0f4ff;"><td><strong>美国五巨头合计</strong></td><td class="num"><strong>~$380B</strong></td><td class="num" style="color:#4361ee;"><strong>~$660–690B</strong></td><td><strong>~1,900 万块</strong></td><td class="em"><strong>~95%</strong></td></tr>
+    </table>
+    <table class="t" style="margin-top:16px;">
+      <tr><th>中国公司</th><th>投资规模</th><th>备注</th></tr>
+      <tr><td>阿里巴巴</td><td class="num">¥3,800 亿 / 3 年（~$520 亿）</td><td>阿里云市占率 35.8%，中国 AI 云第一</td></tr>
+      <tr><td>字节跳动</td><td class="num">—（未公开单独数字）</td><td>火山引擎市占率 14.8%，中国 AI 云第二</td></tr>
+      <tr><td>腾讯</td><td class="num">—（未公开单独数字）</td><td>腾讯云市占率 7%，国产芯片享受电费补贴</td></tr>
+      <tr style="background:#f0f4ff;"><td><strong>中国四巨头合计</strong></td><td class="num" style="color:#4361ee;"><strong>~$840 亿 / 到 2027</strong></td><td>约为美国五巨头 2026 一年投入的 12%</td></tr>
+    </table>
+
+    <div class="chain" style="margin-top:16px;">
+      <div class="chain-node">
+        <div class="cn-label">2026 全球 CapEx</div>
+        <div class="cn-value">~$7,500 亿</div>
+        <div class="cn-unit">AI 基建总投入</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">≈ 新增 GPU</div>
+        <div class="cn-value">~2,000 万块</div>
+        <div class="cn-unit">H100 等效</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">≈ 新增算力</div>
+        <div class="cn-value">~14 万亿</div>
+        <div class="cn-unit">tokens/天 增量</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">折旧周期</div>
+        <div class="cn-value">3–5 年</div>
+        <div class="cn-unit">年折旧 ~$4,000 亿</div>
+      </div>
+    </div>
+    <p class="note">GPU 数量估算：CapEx × ~60%（AI 芯片占比）÷ $35,000/块。折旧 = 2030 年累计 $2T 资产 × 20%/年。实际采购含 B200/GB200 新架构，单位算力更高。</p>
+
+    <div class="analogy"><strong>直觉：</strong>美国五家科技公司 2026 年在 AI 基建上的花费（~$6,700 亿）<strong>超过全球所有国家的军事预算</strong>（除美国外合计 ~$6,500 亿）。一家 Amazon 一年的 AI 投入 = 整个越南的 GDP。这不是"研发"，这是<strong>基础设施建设</strong>——如同 20 世纪修铁路、建电网。</div>
+  </div>
+</div>
+
+<div class="section" id="chain8-country">
+  <div class="section-title" style="border-left-color:#e76f51;">算力的地缘版图：谁拥有生产 Token 的能力？</div>
+  <div class="card">
+    <h3>GPU 算力集中度（2025–2026）</h3>
+    <table class="t">
+      <tr><th>国家/地区</th><th>GPU 算力份额</th><th>数据中心数量</th><th>AI 电力容量 (2026)</th><th>→ 2031 预测</th></tr>
+      <tr><td>🇺🇸 美国</td><td class="num" style="color:#4361ee;font-size:16px;">~75%</td><td>5,426（含 2,528 活跃）</td><td class="num">8.2 GW</td><td>26.4 GW ↑3.2×</td></tr>
+      <tr><td>🇨🇳 中国</td><td class="num">~15%</td><td>483</td><td class="num">3.1 GW</td><td>10.3 GW ↑3.3×</td></tr>
+      <tr><td>🇪🇺 欧洲</td><td class="num">~5%</td><td>1,879</td><td class="num">3.5 GW</td><td>9.7 GW ↑2.8×</td></tr>
+      <tr><td>🇯🇵 日本</td><td class="num">~1%</td><td>210</td><td class="num">1.0 GW</td><td>2.6 GW ↑2.6×</td></tr>
+      <tr><td>🌏 亚太其他</td><td class="num">~3%</td><td>1,203</td><td class="num">2.3 GW</td><td>8.9 GW ↑3.9×</td></tr>
+      <tr><td>🌍 其他</td><td class="num">~1%</td><td>—</td><td>—</td><td>—</td></tr>
+    </table>
+
+    <div class="chain" style="margin-top:16px;">
+      <div class="chain-node" style="background:#eef2ff;">
+        <div class="cn-label">美国</div>
+        <div class="cn-value">75%</div>
+        <div class="cn-unit">GPU 算力</div>
+      </div>
+      <div class="chain-arrow">+</div>
+      <div class="chain-node">
+        <div class="cn-label">中国</div>
+        <div class="cn-value">15%</div>
+        <div class="cn-unit">GPU 算力</div>
+      </div>
+      <div class="chain-arrow">=</div>
+      <div class="chain-node" style="background:#fff8e1;">
+        <div class="cn-label">两国合计</div>
+        <div class="cn-value">90%</div>
+        <div class="cn-unit">全球 AI 算力</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">投资占比</div>
+        <div class="cn-value">70%</div>
+        <div class="cn-unit">全球数据中心投入</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px;">关键地缘约束</h3>
+    <table class="t">
+      <tr><th>约束</th><th>影响</th><th>直觉类比</th></tr>
+      <tr><td>美国芯片出口管制</td><td>中国无法采购 H100/A100；转向华为昇腾、寒武纪</td><td>如同石油禁运——能炼油，但炼油设备受限</td></tr>
+      <tr><td>电力瓶颈</td><td>弗吉尼亚州数据中心用电 &gt; 多数国家总用电</td><td>建再多 GPU 也需要电网跟上；电力审批成为 AI 产能的实际瓶颈</td></tr>
+      <tr><td>主权 AI 运动</td><td>欧盟、日本、中东加速本地算力建设</td><td>如同各国建自己的炼油厂——安全性优先，效率其次</td></tr>
+      <tr><td>国产芯片补贴</td><td>中国政府补贴国产 AI 芯片数据中心电费的 50%</td><td>政策杠杆：降低用国产芯片的边际成本，加速自主替代</td></tr>
+    </table>
+    <div class="analogy"><strong>核心洞察：</strong>Token 的生产能力在地理上极度集中——<strong>美国 + 中国 = 90% 的全球 AI 算力</strong>。这是一种新形式的"资源集中"，如同石油时代的中东。区别在于：石油是天然的地理禀赋，而算力是<strong>资本 + 芯片供应链 + 电力</strong>三者叠加的结果。</div>
+  </div>
+</div>
+
+<!-- ===== TOKEN ≠ TOKEN ===== -->
+<div class="section" id="dim-model">
+  <div class="section-title" style="border-left-color:#8b5cf6;">Token ≠ Token：被忽略的隐藏维度</div>
+  <div class="section-desc">前面 8 条链都假设"1 Token = 1 Token"。但实际上，Token 是一个按<strong>等级 × 方向 × 可见性</strong>定价的复合单位。</div>
+
+  <div class="card">
+    <h3>维度一：模型等级 —— 同样 1K tokens，智力密度不同</h3>
+    <table class="t">
+      <tr><th>模型</th><th>输入价<br><span class="dim">$/百万 tokens</span></th><th>输出价<br><span class="dim">$/百万 tokens</span></th><th>智力水平</th><th>同一任务成本倍率</th></tr>
+      <tr><td>Claude Haiku 4.5</td><td class="num">$1</td><td class="num">$5</td><td>快速执行，简单任务</td><td class="em" style="color:#10b981;">1× (基准)</td></tr>
+      <tr><td>Claude Sonnet 4.6</td><td class="num">$3</td><td class="num">$15</td><td>主力模型，多数任务首选</td><td class="em">3×</td></tr>
+      <tr><td>Claude Opus 4.6</td><td class="num">$5</td><td class="num">$25</td><td>最强推理，复杂分析</td><td class="em">5×</td></tr>
+    </table>
+    <div class="chain" style="margin-top:14px;">
+      <div class="chain-node">
+        <div class="cn-label">一条小红书</div>
+        <div class="cn-value">Haiku</div>
+        <div class="cn-unit">¥0.04</div>
+      </div>
+      <div class="chain-arrow">vs</div>
+      <div class="chain-node">
+        <div class="cn-label">一条小红书</div>
+        <div class="cn-value">Sonnet</div>
+        <div class="cn-unit">¥0.10</div>
+      </div>
+      <div class="chain-arrow">vs</div>
+      <div class="chain-node">
+        <div class="cn-label">一条小红书</div>
+        <div class="cn-value">Opus</div>
+        <div class="cn-unit">¥0.18</div>
+      </div>
+    </div>
+    <div class="analogy"><strong>直觉类比：</strong>Token 不是标准化的螺丝钉，更像是<strong>劳动力</strong>——同样工作 1 小时，实习生（Haiku）、高级工程师（Sonnet）、首席架构师（Opus）的时薪差 5 倍，但输出质量完全不同。选模型就是在"够用"和"最好"之间做性价比决策。</div>
+  </div>
+</div>
+
+<div class="section" id="dim-io">
+  <div class="card">
+    <h3>维度二：输入 vs 输出 —— 读便宜，写很贵</h3>
+    <table class="t">
+      <tr><th></th><th>输入 Token<br><span class="dim">"AI 读你的内容"</span></th><th>输出 Token<br><span class="dim">"AI 写给你的内容"</span></th><th>倍率</th></tr>
+      <tr><td>Haiku</td><td class="num">$1 / 百万</td><td class="num">$5 / 百万</td><td class="em">5×</td></tr>
+      <tr><td>Sonnet</td><td class="num">$3 / 百万</td><td class="num">$15 / 百万</td><td class="em">5×</td></tr>
+      <tr><td>Opus</td><td class="num">$5 / 百万</td><td class="num">$25 / 百万</td><td class="em">5×</td></tr>
+    </table>
+    <p style="font-size:14px;color:#444;margin-top:12px;"><strong>为什么？</strong>输入是"读"——模型一次性并行处理所有输入 Token，效率极高。输出是"写"——模型必须逐个生成 Token，每个都要经过完整的推理链路，计算密度高 5 倍。</p>
+    <div class="analogy"><strong>直觉类比：</strong>读一本书（输入）比写一本书（输出）便宜得多。或者：听一场报告只需要一张门票，但请专家写一份报告要贵 5 倍。这就是为什么"给 AI 一大堆材料让它总结"比"让 AI 从头写长文"划算——输入多、输出少的任务天然成本更低。</div>
+  </div>
+</div>
+
+<div class="section" id="dim-thinking">
+  <div class="card">
+    <h3>维度三：思考 Token —— 你看不到，但在付费的隐藏成本</h3>
+    <p style="font-size:14px;color:#444;margin-bottom:14px;">Claude 和 OpenAI o1/o3 等推理模型在回答之前会进行内部思考（Extended Thinking）。这些思考 Token 按<strong>输出价格</strong>计费，但你在回复中看不到它们。</p>
+    <table class="t">
+      <tr><th>场景</th><th>可见输出</th><th>隐藏思考 Token</th><th>实际总消耗</th><th>思考占比</th></tr>
+      <tr><td>简单问答</td><td class="num">200 tokens</td><td class="num">~0</td><td class="num">~200</td><td>0%</td></tr>
+      <tr><td>写小红书文案</td><td class="num">800 tokens</td><td class="num">~500</td><td class="num">~1,300</td><td>38%</td></tr>
+      <tr><td>复杂代码调试</td><td class="num">1,000 tokens</td><td class="num">~4,000</td><td class="num">~5,000</td><td class="em">80%</td></tr>
+      <tr><td>数学证明 / 深度推理</td><td class="num">500 tokens</td><td class="num">~10,000+</td><td class="num">~10,500</td><td class="em">95%</td></tr>
+    </table>
+    <div class="chain" style="margin-top:14px;">
+      <div class="chain-node">
+        <div class="cn-label">你的问题</div>
+        <div class="cn-value">输入</div>
+        <div class="cn-unit">$3/百万</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="background:#fff8e1;">
+        <div class="cn-label">AI 在脑中思考</div>
+        <div class="cn-value">思考 Token</div>
+        <div class="cn-unit">$15/百万 ⚠️ 不可见</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">你看到的回复</div>
+        <div class="cn-value">输出</div>
+        <div class="cn-unit">$15/百万</div>
+      </div>
+    </div>
+    <div class="analogy"><strong>直觉类比：</strong>请了一个顾问，你付的不只是他写报告（输出）的时间，还有他在脑子里思考和推演的时间（思考 Token）。越难的问题，顾问"想"的时间越长，但你只看到最终的报告。复杂推理任务中，<strong>95% 的 Token 消耗是你看不见的思考过程</strong>。</div>
+  </div>
+</div>
+
+<div class="section" id="dim-context">
+  <div class="card">
+    <h3>维度四：上下文窗口 —— Token 的"工作台大小"</h3>
+    <p style="font-size:14px;color:#444;margin-bottom:14px;">模型一次能"看到"的 Token 数量上限，决定了它能处理多复杂的任务。</p>
+    <table class="t">
+      <tr><th>上下文大小</th><th>≈ 能放什么</th><th>能做的事</th><th>代表模型</th></tr>
+      <tr><td class="num">4K tokens</td><td>2 页 A4</td><td>简单问答、翻译短文</td><td>早期 GPT-3</td></tr>
+      <tr><td class="num">32K tokens</td><td>一份合同</td><td>文档摘要、短篇分析</td><td>GPT-4 (2023)</td></tr>
+      <tr><td class="num">128K tokens</td><td>一本书</td><td>整书分析、长代码审查</td><td>GPT-4o</td></tr>
+      <tr><td class="num" style="color:#4361ee;font-size:16px;">1M tokens</td><td><strong>一个文件柜</strong></td><td>跨文档研究、整个代码库</td><td>Claude Sonnet/Opus 4.6</td></tr>
+    </table>
+    <div class="analogy"><strong>直觉类比：</strong>上下文窗口就是 AI 的<strong>桌面大小</strong>。4K = 学校课桌（只能放一本书），128K = 办公桌（一本书摊开），1M = 大会议桌（整个文件柜的材料铺满）。桌面越大，能同时参考的信息越多，输出质量越高——但你要为"放在桌上的每一张纸"（输入 Token）付费。</div>
+  </div>
+</div>
+
+<div class="section" id="dim-deflation">
+  <div class="card">
+    <h3>维度五：Token 的通缩曲线 —— 同一个任务越来越便宜</h3>
+    <p style="font-size:14px;color:#444;margin-bottom:14px;">Token 不是稳定的货币，而是一个<strong>持续贬值的计价单位</strong>。同样一个任务的成本每年都在暴跌。</p>
+    <table class="t">
+      <tr><th>任务</th><th>2023 年初</th><th>2024 年初</th><th>2026 年初</th><th>累计降幅</th></tr>
+      <tr><td>小红书文案</td><td>¥4.50</td><td>¥0.45</td><td class="num">¥0.10</td><td class="em">↓ 98%</td></tr>
+      <tr><td>竞品分析</td><td>¥120</td><td>¥12</td><td class="num">¥2.30</td><td class="em">↓ 98%</td></tr>
+      <tr><td>AI 生一张图</td><td>¥1.50</td><td>¥0.30</td><td class="num">¥0.04</td><td class="em">↓ 97%</td></tr>
+      <tr><td>1 分钟 AI 视频</td><td>不可能</td><td>¥250+</td><td class="num">¥55</td><td class="em">↓ 78% (1年)</td></tr>
+    </table>
+    <div class="chain" style="margin-top:14px;">
+      <div class="chain-node">
+        <div class="cn-label">2023</div>
+        <div class="cn-value">¥120</div>
+        <div class="cn-unit">竞品分析</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">2024</div>
+        <div class="cn-value">¥12</div>
+        <div class="cn-unit">↓ 90%</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">
+        <div class="cn-label">2026</div>
+        <div class="cn-value">¥2.3</div>
+        <div class="cn-unit">↓ 98%</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="background:#ecfdf5;">
+        <div class="cn-label">2028（预测）</div>
+        <div class="cn-value">¥0.2?</div>
+        <div class="cn-unit">≈ 免费</div>
+      </div>
+    </div>
+    <div class="analogy"><strong>直觉类比：</strong>如果汽油以同样的速度降价——2023 年加满一箱油 ¥400，2026 年只要 ¥8，2028 年几乎免费。这不是普通的"降价促销"，而是技术革命驱动的<strong>结构性通缩</strong>。含义是：今天觉得"太贵不值得 AI 做"的任务，18 个月后就值得了。</div>
+  </div>
+</div>
+
+<!-- ===== CROSS REFERENCE ===== -->
+<div class="section" id="xref">
+  <div class="section-title">全景交叉表：一个任务的七面体</div>
+  <div class="card" style="overflow-x: auto;">
+    <table class="xref">
+      <tr>
+        <th>任务</th>
+        <th>Token</th>
+        <th>≈ 页数</th>
+        <th>耗电</th>
+        <th>GPU 成本</th>
+        <th>API 售价</th>
+        <th>等价人力</th>
+        <th>AI 用时</th>
+      </tr>
+      <tr>
+        <td class="task-name">简单问答</td>
+        <td>500</td><td>0.5</td><td>0.004Wh</td><td>¥0.003</td>
+        <td class="em">¥0.04</td><td>—</td><td>4s</td>
+      </tr>
+      <tr>
+        <td class="task-name">小红书文案</td>
+        <td>1K</td><td>1</td><td>0.008Wh</td><td>¥0.005</td>
+        <td class="em">¥0.10</td><td>¥200+</td><td>8s</td>
+      </tr>
+      <tr>
+        <td class="task-name">抖音脚本</td>
+        <td>2K</td><td>2</td><td>0.016Wh</td><td>¥0.01</td>
+        <td class="em">¥0.18</td><td>¥300+</td><td>16s</td>
+      </tr>
+      <tr>
+        <td class="task-name">写 PRD</td>
+        <td>15K</td><td>15</td><td>0.12Wh</td><td>¥0.08</td>
+        <td class="em">¥1.50</td><td>¥1,500+</td><td>2.5min</td>
+      </tr>
+      <tr>
+        <td class="task-name">竞品分析</td>
+        <td>27K</td><td>27</td><td>0.22Wh</td><td>¥0.14</td>
+        <td class="em">¥2.30</td><td>¥2,000+</td><td>4min</td>
+      </tr>
+      <tr>
+        <td class="task-name">做落地页网站</td>
+        <td>80K</td><td>80</td><td>0.64Wh</td><td>¥0.40</td>
+        <td class="em">¥7.20</td><td>¥3,000+</td><td>10min</td>
+      </tr>
+      <tr>
+        <td class="task-name">做小工具 App</td>
+        <td>200K</td><td>200</td><td>1.60Wh</td><td>¥1.00</td>
+        <td class="em">¥18</td><td>¥8,000+</td><td>30min</td>
+      </tr>
+      <tr>
+        <td class="task-name">全栈小项目</td>
+        <td>500K</td><td>500</td><td>4.00Wh</td><td>¥2.50</td>
+        <td class="em">¥43</td><td>¥15,000+</td><td>80min</td>
+      </tr>
+      <tr>
+        <td class="task-name">AI 生 1 张图</td>
+        <td>~3K 等价</td><td>—</td><td>~10Wh</td><td>—</td>
+        <td class="em">¥0.30</td><td>¥200+</td><td>10s</td>
+      </tr>
+      <tr>
+        <td class="task-name">AI 生 1 分钟视频</td>
+        <td>~30–80万 等价</td><td>—</td><td>~500Wh</td><td>—</td>
+        <td class="em">¥30–86</td><td>¥500+</td><td>3–10min</td>
+      </tr>
+      <tr>
+        <td class="task-name">语音对话 1 分钟</td>
+        <td>~2万 等价</td><td>—</td><td>~15Wh</td><td>—</td>
+        <td class="em">¥2.2</td><td>—</td><td>实时</td>
+      </tr>
+      <tr>
+        <td class="task-name">AI 同传 1 小时</td>
+        <td>~70–200万 等价</td><td>—</td><td>~200Wh</td><td>—</td>
+        <td class="em">¥72–216</td><td>¥3,000+</td><td>实时</td>
+      </tr>
+      <tr>
+        <td class="task-name">数字人直播 1 小时</td>
+        <td>~13–39万 等价</td><td>—</td><td>~100Wh</td><td>—</td>
+        <td class="em">¥15–58</td><td>¥200+</td><td>实时</td>
+      </tr>
+    </table>
+    <p class="note">GPU 成本 = Token × $0.70/百万 tokens。API 售价基于 Claude Sonnet。多模态 GPU 成本因模型架构不同无法直接对比。</p>
+  </div>
+</div>
+
+<!-- ===== Trend ===== -->
+<div class="section" id="trend">
+  <div class="section-title">趋势：Token 的"摩尔定律"</div>
+  <div class="card">
+    <table class="t">
+      <tr><th>指标</th><th>2024 年初</th><th>2026 年初</th><th>变化</th></tr>
+      <tr><td>旗舰模型输出价</td><td>$60/百万 tokens</td><td>$14/百万 tokens</td><td class="em">↓ 77%</td></tr>
+      <tr><td>最便宜可用模型</td><td>$0.60/百万 tokens</td><td>$0.075/百万 tokens</td><td class="em">↓ 88%</td></tr>
+      <tr><td>AI 生图成本</td><td>~$0.20/张</td><td>~$0.04/张</td><td class="em">↓ 80%</td></tr>
+      <tr><td>AI 生视频成本</td><td>$30–50/分钟</td><td>$4–12/分钟</td><td class="em">↓ 60–87%</td></tr>
+      <tr><td>模型输出速度</td><td>~30 t/s</td><td>~80–250 t/s</td><td class="em">↑ 3–8×</td></tr>
+      <tr><td>上下文窗口</td><td>128K tokens</td><td>1M tokens</td><td class="em">↑ 8×</td></tr>
+      <tr><td>全球日产 Token</td><td>~10 万亿</td><td>~100 万亿</td><td class="em">↑ 10×</td></tr>
+    </table>
+    <div class="analogy"><strong>Token 的摩尔定律：</strong>每 12–18 个月，同等智能的 Token 价格下降 ~80%，速度提升 3 倍+。文字 > 图片 > 视频，越"重"的模态降价越快（因为起点高、优化空间大）。</div>
+  </div>
+</div>
+
+<!-- ===== Summary ===== -->
+<div class="section" id="summary">
+  <div class="section-title">总结：八条链 + 五个隐藏维度的核心直觉</div>
+  <div class="callout">
+    <h4>① 大小 → 1,000 tokens = 一页 A4</h4>
+    <p>中文比英文多 ~50% tokens。一条小红书 ≈ 300 tokens，一本书 ≈ 100K tokens。</p>
+  </div>
+  <div class="callout">
+    <h4>② 成本 → GPU 折旧占 53%，电费只占 2%</h4>
+    <p>一块 ¥25 万的 H100 是真正的成本大头。电费 ¥0.003/百万 tokens vs GPU ¥5/百万 tokens，差 1,700 倍。类比：出租车的车辆折旧 vs 油钱。</p>
+  </div>
+  <div class="callout">
+    <h4>③ 任务 → 文字几分钱，图片几毛钱，视频几十块，实时对话每分钟 ¥2</h4>
+    <p>一条小红书文案 ¥0.10，一张 AI 图 ¥0.30，一分钟 AI 视频 ¥30–86，语音对话 ¥2.2/分钟。数字人直播 ¥15–58/时（人工 ¥200+）。语音客服是目前唯一 AI 比人工更贵的场景。</p>
+  </div>
+  <div class="callout">
+    <h4>④ 订阅 → $20/月 ≈ 每天 120 次问答 / 3 份 PRD / 2 次深度研究</h4>
+    <p>重度用户（日做 10+ 次深度研究）需要 $200/月档位。</p>
+  </div>
+  <div class="callout">
+    <h4>⑤ 人力 → 文字工作 AI 便宜 1,000–10,000 倍，视频 10–170 倍，同传 15–80 倍</h4>
+    <p>模态越重，AI 优势越小但仍显著。数字人直播（23–71×）和同传（15–80×）优势明显，但语音客服是唯一 AI 暂时更贵的场景。</p>
+  </div>
+  <div class="callout">
+    <h4>⑥ 速度 → 一个 AI 实例 ≈ 300 个翻译同时工作</h4>
+    <p>80 tokens/秒 → 邮件 30 秒，研究 4 分钟。视频生成 3–10 分钟/分钟。</p>
+  </div>
+  <div class="callout">
+    <h4>⑦ 规模 → 全球日产 100 万亿 tokens，由 ¥8,000 亿 GPU 资产驱动</h4>
+    <p>= 人类全部书籍的 10 倍/天。瓶颈在电力和芯片供应链，不在模型能力。</p>
+  </div>
+  <div class="callout">
+    <h4>⑧ 资本 → 2026 年全球 AI 基建投入 ~$7,500 亿，美国五巨头占 90%+</h4>
+    <p>美中两国掌握全球 90% 的 AI 算力。芯片出口管制 + 电力瓶颈 = Token 生产能力的地缘政治。这是新时代的"石油储备"。</p>
+  </div>
+  <div class="callout" style="border-left-color:#8b5cf6;">
+    <h4>⚠️ Token ≠ Token → 等级×方向×可见性 三重定价</h4>
+    <p><strong>等级：</strong>Haiku → Sonnet → Opus，同一任务成本差 5 倍。<strong>方向：</strong>输出比输入贵 5 倍（写比读贵）。<strong>思考：</strong>复杂推理任务 95% 的消耗是看不见的思考 Token。<strong>通缩：</strong>每个任务的成本每 18 个月下降 ~90%。</p>
+  </div>
+</div>
+
+<div class="footer">
+  调研 by Sherry · 数据来源：IEA、Gartner、Goldman Sachs、Epoch AI、Anthropic、OpenAI、Google、NVIDIA、Artificial Analysis、SCMP 等公开资料 · 2026.04
+</div>
+</div>
+
+<script>
+function switchTab(e, tabId) {
+  const container = e.target.closest('.card');
+  container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// Toggle nav section open/close
+function toggleNav(header) {
+  header.parentElement.classList.toggle('open');
+}
+
+// Scroll-spy: highlight active sidebar link + auto-expand parent section
+(function() {
+  const links = document.querySelectorAll('.sidebar a[href^="#"]');
+  const sections = [];
+  links.forEach(a => {
+    const id = a.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ el, a });
+  });
+  function onScroll() {
+    let current = sections[0];
+    for (const s of sections) {
+      if (s.el.getBoundingClientRect().top <= 120) current = s;
+    }
+    links.forEach(a => a.classList.remove('active'));
+    if (current) {
+      current.a.classList.add('active');
+      // auto-expand the parent nav-section
+      const parentSection = current.a.closest('.nav-section');
+      if (parentSection && !parentSection.classList.contains('open')) {
+        parentSection.classList.add('open');
+      }
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>

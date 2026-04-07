@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Token 换算器 — AI 世界的度量衡</title>
+<style>
+  :root {
+    --primary: #6366f1; --primary-light: #eef2ff; --primary-dark: #4338ca;
+    --amber: #f59e0b; --amber-light: #fffbeb; --amber-bg: #fef3c7;
+    --emerald: #10b981; --emerald-light: #ecfdf5;
+    --rose: #f43f5e; --rose-light: #fff1f2;
+    --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
+    --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    --radius: 16px; --radius-sm: 10px; --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 24px rgba(99,102,241,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(180deg, #f0f2ff 0%, var(--gray-50) 30%, #fff 100%);
+    color: var(--gray-800); line-height: 1.6; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .app { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+
+  /* ── Header ── */
+  .header { text-align: center; padding: 56px 0 36px; }
+  .header-icon { font-size: 48px; margin-bottom: 12px; filter: drop-shadow(0 4px 8px rgba(99,102,241,0.2)); }
+  .header h1 { font-size: 32px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.5px; }
+  .header p { font-size: 15px; color: var(--gray-500); margin-top: 8px; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .header p strong { color: var(--amber); font-weight: 700; }
+  .header p .time-hl { color: var(--emerald); font-weight: 700; }
+
+  /* ── Category Pills ── */
+  .cats { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+  .cat-pill {
+    padding: 7px 18px; border-radius: 100px; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--gray-200); background: #fff; color: var(--gray-500);
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .cat-pill:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+  .cat-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 12px rgba(99,102,241,0.3); }
+
+  /* ── Item Grid ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 32px; }
+  .item-card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    padding: 14px 6px; border-radius: var(--radius-sm); border: 2px solid var(--gray-100);
+    background: #fff; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 80px; text-align: center;
+  }
+  .item-card:hover { border-color: #c7d2fe; background: var(--primary-light); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .item-card.active { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .item-card .icon { font-size: 28px; line-height: 1; }
+  .item-card .label { font-size: 11.5px; font-weight: 600; color: var(--gray-600); line-height: 1.3; }
+  .item-card.active .label { color: var(--primary-dark); }
+
+  /* ── Quantity Bar ── */
+  .qty-bar {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    background: #fff; border-radius: 100px; padding: 10px 24px; margin-bottom: 12px;
+    border: 1.5px solid var(--gray-100); box-shadow: var(--shadow);
+  }
+  .qty-label { font-size: 13px; color: var(--gray-400); font-weight: 600; }
+  .qty-btn {
+    width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--gray-200);
+    background: #fff; font-size: 18px; font-weight: 600; color: var(--gray-600);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .qty-btn:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+  .qty-num { font-size: 22px; font-weight: 800; color: var(--gray-800); width: 48px; text-align: center; }
+  .qty-slider { flex: 1; max-width: 140px; accent-color: var(--primary); }
+
+  /* ── Flow Arrow ── */
+  .flow-arrow { text-align: center; padding: 6px 0; color: var(--gray-300); font-size: 20px; }
+
+  /* ── Conversion Panel ── */
+  .panel {
+    background: #fff; border-radius: var(--radius); overflow: hidden;
+    border: 1.5px solid var(--gray-100); box-shadow: var(--shadow-lg);
+    margin-bottom: 48px; transition: all 0.3s;
+  }
+
+  /* Panel Header */
+  .panel-header {
+    background: linear-gradient(135deg, #eef2ff 0%, #ede9fe 50%, #faf5ff 100%);
+    padding: 24px 28px; border-bottom: 1px solid #e0e7ff;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .panel-header .big-icon { font-size: 44px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+  .panel-header .info h2 { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+  .panel-header .info .note { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+
+  /* Token Hero */
+  .token-hero {
+    text-align: center; padding: 28px 24px 24px;
+    background: linear-gradient(180deg, #fff 0%, var(--gray-50) 100%);
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .token-hero .token-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--primary); opacity: 0.7; margin-bottom: 6px;
+  }
+  .token-hero .token-value {
+    font-size: 48px; font-weight: 900; color: var(--gray-900);
+    letter-spacing: -1px; line-height: 1.1;
+    background: linear-gradient(135deg, var(--gray-900) 0%, var(--primary) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .token-hero .token-unit { font-size: 13px; color: var(--gray-400); margin-top: 4px; }
+
+  /* Money + Time row */
+  .duo-row { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--gray-100); }
+  .duo-cell { padding: 20px 24px; text-align: center; }
+  .duo-cell:first-child { border-right: 1px solid var(--gray-100); }
+  .duo-cell .cell-icon { font-size: 13px; margin-bottom: 4px; }
+  .duo-cell .cell-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .duo-cell.money .cell-label { color: var(--amber); }
+  .duo-cell.time .cell-label { color: var(--emerald); }
+  .duo-cell .cell-value { font-size: 28px; font-weight: 800; color: var(--gray-800); }
+  .duo-cell .cell-sub { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+
+  /* Human Comparison */
+  .comparison { padding: 24px 28px; }
+  .comparison-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .comparison-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-400); }
+  .badge {
+    font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 100px;
+  }
+  .badge.good { background: var(--primary-light); color: var(--primary); }
+  .badge.warn { background: var(--rose-light); color: var(--rose); }
+
+  /* Bars */
+  .bar-group { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 12px; }
+  .bar-label { width: 28px; font-size: 11px; font-weight: 700; color: var(--gray-400); text-align: right; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 32px; background: var(--gray-100); border-radius: 100px; overflow: hidden; position: relative; }
+  .bar-fill {
+    height: 100%; border-radius: 100px; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px;
+    transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1); min-width: 56px;
+  }
+  .bar-fill.ai { background: linear-gradient(90deg, #a5b4fc, var(--primary)); }
+  .bar-fill.ai-warn { background: linear-gradient(90deg, #fca5a5, var(--rose)); }
+  .bar-fill.human { background: linear-gradient(90deg, #fdba74, #f97316); }
+  .bar-fill span { font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+  .bar-note { text-align: center; font-size: 12px; color: var(--gray-400); margin-top: 10px; }
+
+  /* Context note (no human comparison) */
+  .context-note {
+    padding: 20px 28px; display: flex; align-items: flex-start; gap: 10px;
+    font-size: 13.5px; color: var(--gray-500); line-height: 1.6;
+    background: var(--amber-light); border-top: 1px solid #fef3c7;
+  }
+  .context-note .bulb { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── Footer ── */
+  .footer { text-align: center; padding: 32px 0 48px; font-size: 12px; color: var(--gray-300); }
+
+  /* ── Responsive ── */
+  @media (max-width: 500px) {
+    .header { padding: 40px 0 28px; }
+    .header h1 { font-size: 26px; }
+    .grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .token-hero .token-value { font-size: 36px; }
+    .duo-cell .cell-value { font-size: 22px; }
+    .panel-header { padding: 20px; }
+    .comparison { padding: 20px; }
+  }
+
+  /* ── Model Selector ── */
+  .model-bar {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin-bottom: 20px;
+  }
+  .model-bar .ml { font-size: 12px; color: var(--gray-400); font-weight: 600; margin-right: 8px; }
+  .model-pill {
+    padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 700;
+    border: 1.5px solid var(--gray-200); background: #fff; color: var(--gray-500);
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .model-pill:hover { border-color: #a78bfa; color: #7c3aed; }
+  .model-pill.active { background: #7c3aed; color: #fff; border-color: #7c3aed; box-shadow: 0 2px 10px rgba(124,58,237,0.25); }
+  .model-pill .tier { font-size: 10px; opacity: 0.7; margin-left: 4px; }
+
+  /* ── IO Breakdown ── */
+  .io-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    border-bottom: 1px solid var(--gray-100); font-size: 12px;
+  }
+  .io-cell { padding: 10px 24px; text-align: center; }
+  .io-cell:first-child { border-right: 1px solid var(--gray-100); }
+  .io-cell .io-label { font-size: 10px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .io-cell .io-val { font-size: 14px; font-weight: 700; color: var(--gray-600); }
+  .io-cell .io-sub { font-size: 10px; color: var(--gray-300); margin-top: 2px; }
+
+  /* ── Animations ── */
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .panel { animation: fadeInUp 0.35s ease-out; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">🪙</div>
+    <h1>Token 换算器</h1>
+    <p>选一个物理世界的东西，看它等于多少 Token<br/>始终对应 <strong>💰 多少钱</strong> 和 <span class="time-hl">⏱ 多少时间</span></p>
+  </div>
+
+  <!-- Category Pills -->
+  <div class="cats" id="cats"></div>
+
+  <!-- Item Grid -->
+  <div class="grid" id="grid"></div>
+
+  <!-- Quantity Bar -->
+  <div class="qty-bar">
+    <span class="qty-label">数量</span>
+    <button class="qty-btn" onclick="changeQty(-1)">−</button>
+    <span class="qty-num" id="qtyNum">1</span>
+    <button class="qty-btn" onclick="changeQty(1)">+</button>
+    <input type="range" class="qty-slider" min="1" max="100" value="1" oninput="setQty(+this.value)">
+  </div>
+
+  <!-- Model Selector -->
+  <div class="model-bar" id="modelBar"></div>
+
+  <div class="flow-arrow">▼</div>
+
+  <!-- Conversion Panel -->
+  <div class="panel" id="panel"></div>
+
+  <div class="footer">Token 换算器 · 可切换 Haiku / Sonnet / Opus 模型 · 含输入/输出拆分 · 2026.04</div>
+</div>
+
+<script>
+/* ══════════ DATA ══════════ */
+const CATS = [
+  { id: "all", name: "全部" },
+  { id: "text", name: "📝 文本" },
+  { id: "create", name: "✨ 创作任务" },
+  { id: "media", name: "🎨 图片 & 视频" },
+  { id: "realtime", name: "🎙️ 实时互动" },
+  { id: "infra", name: "⚡ 基础设施" },
+];
+
+// inR = input ratio; sec = base seconds at Sonnet speed (null = use static timeStr)
+const ITEMS = [
+  // text — mostly output (AI generating text)
+  { id:"email", name:"一封邮件", icon:"✉️", cat:"text", tokens:500, inR:0.4, sec:4, hYuan:null, hTime:null, note:"简单问答或回复" },
+  { id:"a4", name:"一页 A4", icon:"📄", cat:"text", tokens:1000, inR:0.3, sec:8, hYuan:null, hTime:null, note:"≈ 500 个汉字" },
+  { id:"chapter", name:"一个章节", icon:"📖", cat:"text", tokens:10000, inR:0.25, sec:90, hYuan:null, hTime:null, note:"≈ 10 页 · 5,000 字" },
+  { id:"book", name:"一本书", icon:"📚", cat:"text", tokens:100000, inR:0.2, sec:900, hYuan:null, hTime:null, note:"≈ 100 页 · 50,000 字" },
+  // create
+  { id:"xhs", name:"小红书文案", icon:"📱", cat:"create", tokens:1000, inR:0.3, sec:8, hYuan:200, hTime:"30 分钟", note:"种草笔记 ~500 字" },
+  { id:"douyin", name:"抖音脚本", icon:"🎬", cat:"create", tokens:2000, inR:0.3, sec:16, hYuan:300, hTime:"1 小时", note:"1 分钟短视频脚本" },
+  { id:"translate", name:"翻译 1,000 词", icon:"🌐", cat:"create", tokens:2000, inR:0.5, sec:15, hYuan:750, hTime:"2 小时", note:"中英互译 · 输入输出各半" },
+  { id:"blog", name:"博客文章", icon:"✍️", cat:"create", tokens:3000, inR:0.25, sec:25, hYuan:500, hTime:"3 小时", note:"2,000 字深度长文" },
+  { id:"prd", name:"PRD 文档", icon:"📋", cat:"create", tokens:15000, inR:0.35, sec:150, hYuan:1500, hTime:"2 天", note:"产品需求文档" },
+  { id:"analysis", name:"竞品分析", icon:"🔍", cat:"create", tokens:27000, inR:0.4, sec:240, hYuan:2000, hTime:"3 天", note:"完整竞品报告 · 大量输入" },
+  { id:"data_rpt", name:"数据分析报告", icon:"📊", cat:"create", tokens:35000, inR:0.45, sec:300, hYuan:2500, hTime:"2 天", note:"含图表和洞察" },
+  { id:"code", name:"代码模块", icon:"💻", cat:"create", tokens:50000, inR:0.35, sec:480, hYuan:3000, hTime:"1 天", note:"完整功能模块" },
+  { id:"landing", name:"做一个落地页", icon:"🌐", cat:"create", tokens:80000, inR:0.4, sec:600, hYuan:3000, hTime:"1–2 天", note:"响应式网站 · 含动画交互" },
+  { id:"miniapp", name:"做一个小工具 App", icon:"🛠️", cat:"create", tokens:200000, inR:0.45, sec:1800, hYuan:8000, hTime:"3–5 天", note:"如本 Token 换算器" },
+  { id:"refactor", name:"重构一个代码模块", icon:"🔄", cat:"create", tokens:150000, inR:0.55, sec:1200, hYuan:5000, hTime:"2–3 天", note:"读旧代码 + 重写 · 输入占比高" },
+  { id:"fullstack", name:"全栈小项目", icon:"🚀", cat:"create", tokens:500000, inR:0.5, sec:4800, hYuan:15000, hTime:"1–2 周", note:"前后端 + 数据库 · Claude Code 约 1 天" },
+  // media — mostly fixed pricing
+  { id:"img1", name:"AI 生一张图", icon:"🖼️", cat:"media", tokens:3000, inR:0.2, sec:10, hYuan:200, hTime:"1–2 小时", note:"≈ 3K 等价 tokens", fixed:0.30 },
+  { id:"img10", name:"AI 批量出图 ×10", icon:"🎨", cat:"media", tokens:30000, inR:0.2, sec:120, hYuan:3000, hTime:"1–2 天", note:"系列配图", fixed:3.0 },
+  { id:"vid1", name:"1 分钟 AI 视频", icon:"📹", cat:"media", tokens:500000, inR:0.1, sec:300, hYuan:2000, hTime:"1–3 天", note:"Sora / Runway 级别", fixed:55 },
+  // realtime — always "实时"
+  { id:"voice", name:"语音对话 1 分钟", icon:"🎙️", cat:"realtime", tokens:20000, inR:0.5, sec:null, timeStr:"实时", hYuan:null, hTime:null, note:"音频 token = 20× 文字价格", fixed:2.2 },
+  { id:"voicecs", name:"AI 语音客服 1h", icon:"📞", cat:"realtime", tokens:1200000, inR:0.5, sec:null, timeStr:"实时", hYuan:75, hTime:"实时", note:"目前 AI 比人工更贵", warn:true, fixed:130 },
+  { id:"interp", name:"AI 同声传译 1h", icon:"🗣️", cat:"realtime", tokens:1500000, inR:0.5, sec:null, timeStr:"实时", hYuan:4500, hTime:"实时", note:"比人工便宜 15–80 倍", fixed:144 },
+  { id:"avatar", name:"数字人直播 1h", icon:"👤", cat:"realtime", tokens:250000, inR:0.3, sec:null, timeStr:"实时", hYuan:200, hTime:"实时", note:"可 24/7 不间断", fixed:36 },
+  // infra — fixed costs
+  { id:"kwh", name:"一度电", icon:"⚡", cat:"infra", tokens:125000000, inR:0, sec:null, timeStr:"—", hYuan:null, hTime:null, note:"可生产 1.25 亿 tokens", fixed:0.70 },
+  { id:"gpu1h", name:"H100 GPU 一小时", icon:"🔧", cat:"infra", tokens:288000, inR:0, sec:null, timeStr:"1 小时", hYuan:null, hTime:null, note:"按 80 tokens/秒产能", fixed:9.70 },
+  { id:"gpu", name:"一块 H100 GPU", icon:"💎", cat:"infra", tokens:7560000000, inR:0, sec:null, timeStr:"3 年寿命", hYuan:null, hTime:null, note:"¥25 万 · AI 成本大头", fixed:250000 },
+  { id:"sub", name:"$20 月度订阅", icon:"📦", cat:"infra", tokens:10000000, inR:0, sec:null, timeStr:"30 天", hYuan:null, hTime:null, note:"≈ 1,000 万 tokens / 月", fixed:145 },
+];
+
+const MODELS = [
+  { id:"haiku", name:"Haiku 4.5", inPrice:1, outPrice:5, label:"经济", color:"#10b981", speed:2.5 },  // ~2.5x faster than Sonnet
+  { id:"sonnet", name:"Sonnet 4.6", inPrice:3, outPrice:15, label:"主力", color:"#6366f1", speed:1 },   // baseline
+  { id:"opus", name:"Opus 4.6", inPrice:5, outPrice:25, label:"旗舰", color:"#7c3aed", speed:0.45 },   // ~0.45x Sonnet speed (slower, deeper thinking)
+];
+
+/* ══════════ STATE ══════════ */
+let currentCat = "all";
+let currentId = "xhs";
+let qty = 1;
+let currentModel = "sonnet";
+
+/* ══════════ UTILS ══════════ */
+function fmtT(n) {
+  n = Math.round(n);
+  if (n >= 1e8) return (n/1e8).toFixed(n>=1e9?1:2) + " 亿";
+  if (n >= 1e4) return (n/1e4).toFixed(n>=1e6?0:n>=1e5?1:2) + " 万";
+  return n.toLocaleString("en-US");
+}
+function fmtY(n) {
+  if (n >= 10000) return "¥" + (n/10000).toFixed(1) + " 万";
+  if (n >= 100) return "¥" + n.toFixed(0);
+  if (n >= 1) return "¥" + n.toFixed(1);
+  return "¥" + n.toFixed(2);
+}
+function getRatio(h, a) {
+  if (!h || !a) return null;
+  const r = h / a;
+  if (r < 1) return null;
+  if (r >= 1000) return Math.round(r/100)*100;
+  if (r >= 100) return Math.round(r/10)*10;
+  return Math.round(r*10)/10;
+}
+function getItem() { return ITEMS.find(i => i.id === currentId); }
+function getModel() { return MODELS.find(m => m.id === currentModel); }
+// Compute display time based on model speed
+function calcTime(item, q) {
+  if (item.sec === null) return item.timeStr;
+  const model = getModel();
+  const totalSec = Math.round((item.sec * q) / model.speed);
+  if (totalSec < 60) return totalSec + " 秒";
+  if (totalSec < 3600) return (totalSec / 60).toFixed(1).replace(/\.0$/, '') + " 分钟";
+  return (totalSec / 3600).toFixed(1).replace(/\.0$/, '') + " 小时";
+}
+// Compute price for an item under the current model
+// Returns { total, inCost, outCost, inTokens, outTokens }
+function calcPrice(item, q) {
+  const model = getModel();
+  const rate = 7.2; // USD→CNY
+  if (item.fixed) return { total: item.fixed * q, inCost:0, outCost:0, inTokens:0, outTokens:0, isFixed:true };
+  const totalT = item.tokens * q;
+  const inT = Math.round(totalT * item.inR);
+  const outT = totalT - inT;
+  const inCost = (inT / 1e6) * model.inPrice * rate;
+  const outCost = (outT / 1e6) * model.outPrice * rate;
+  return { total: inCost + outCost, inCost, outCost, inTokens: inT, outTokens: outT, isFixed:false };
+}
+
+function contextNote(item, q) {
+  const t = item.tokens * q;
+  if (item.cat === "infra") {
+    if (item.id === "kwh") return "这些 Token 够写 " + Math.round(t/1000).toLocaleString() + " 篇小红书文案，或 " + Math.round(t/27000).toLocaleString() + " 份竞品分析";
+    if (item.id === "gpu1h") return "一小时产能 ≈ " + Math.round(t/27000) + " 份竞品分析，或 " + Math.round(t/1000) + " 条小红书";
+    if (item.id === "gpu") return "3 年寿命期内可生产 " + fmtT(t) + " tokens，每天 ≈ " + fmtT(Math.round(t/1095));
+    if (item.id === "sub") return "一个月可做 ≈ " + Math.round(t/27000) + " 次竞品分析，或 " + fmtT(t/1000) + " 条小红书";
+  }
+  if (item.cat === "text") return "纯文本，无需人力对比 · " + fmtT(t) + " tokens ≈ " + Math.round(t/1000) + " 页 A4";
+  if (item.id === "voice") return "语音 token 价格是文字的 20 倍 · Realtime API 音频模态的 Token 密度极高";
+  return fmtT(t) + " tokens";
+}
+
+/* ══════════ RENDER ══════════ */
+function renderCats() {
+  const el = document.getElementById("cats");
+  el.innerHTML = CATS.map(c =>
+    `<button class="cat-pill${c.id===currentCat?' active':''}" onclick="setCat('${c.id}')">${c.name}</button>`
+  ).join("");
+}
+
+function renderGrid() {
+  const el = document.getElementById("grid");
+  const list = currentCat === "all" ? ITEMS : ITEMS.filter(i => i.cat === currentCat);
+  el.innerHTML = list.map(i =>
+    `<div class="item-card${i.id===currentId?' active':''}" onclick="selectItem('${i.id}')">
+      <span class="icon">${i.icon}</span>
+      <span class="label">${i.name}</span>
+    </div>`
+  ).join("");
+}
+
+function renderModels() {
+  document.getElementById("modelBar").innerHTML =
+    `<span class="ml">模型</span>` +
+    MODELS.map(m =>
+      `<button class="model-pill${m.id===currentModel?' active':''}" onclick="setModel('${m.id}')">${m.name}<span class="tier">${m.label}</span></button>`
+    ).join("");
+}
+
+function renderPanel() {
+  const item = getItem();
+  const model = getModel();
+  if (!item) return;
+  const t = item.tokens * qty;
+  const p = calcPrice(item, qty);
+  const y = p.total;
+  const hY = item.hYuan ? item.hYuan * qty : null;
+  const r = getRatio(hY, y);
+  const isWarn = item.warn && y > (hY || Infinity);
+
+  // IO breakdown row (only for non-fixed items)
+  let ioHTML = "";
+  if (!p.isFixed) {
+    ioHTML = `
+    <div class="io-row">
+      <div class="io-cell">
+        <div class="io-label">📥 输入 (读)</div>
+        <div class="io-val">${fmtT(p.inTokens)} → ${fmtY(p.inCost)}</div>
+        <div class="io-sub">$${model.inPrice}/百万 · ${Math.round(item.inR*100)}% 的 token</div>
+      </div>
+      <div class="io-cell">
+        <div class="io-label">📤 输出 (写)</div>
+        <div class="io-val">${fmtT(p.outTokens)} → ${fmtY(p.outCost)}</div>
+        <div class="io-sub">$${model.outPrice}/百万 · ${Math.round((1-item.inR)*100)}% 的 token</div>
+      </div>
+    </div>`;
+  }
+
+  let compHTML = "";
+  if (hY !== null) {
+    const maxV = Math.max(y, hY);
+    const aiPct = Math.max((y / maxV) * 100, 6);
+    const hPct = Math.max((hY / maxV) * 100, 6);
+    const badgeClass = isWarn ? "warn" : "good";
+    const badgeText = isWarn ? "⚠️ AI 目前更贵" : ("AI 便宜 " + (r ? r.toLocaleString() + "×" : "—"));
+    const barClass = isWarn ? "ai-warn" : "ai";
+
+    compHTML = `
+    <div class="comparison">
+      <div class="comparison-header">
+        <span class="comparison-title">👤 人工对比</span>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="bar-group">
+        <div class="bar-row">
+          <span class="bar-label">AI</span>
+          <div class="bar-track"><div class="bar-fill ${barClass}" style="width:${aiPct}%"><span>${fmtY(y)}</span></div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">人工</span>
+          <div class="bar-track"><div class="bar-fill human" style="width:${hPct}%"><span>${fmtY(hY)}</span></div></div>
+        </div>
+      </div>
+      ${item.hTime ? `<div class="bar-note">人工耗时：${item.hTime}${qty > 1 ? " × " + qty : ""}</div>` : ""}
+    </div>`;
+  } else {
+    compHTML = `
+    <div class="context-note">
+      <span class="bulb">💡</span>
+      <span>${contextNote(item, qty)}</span>
+    </div>`;
+  }
+
+  document.getElementById("panel").innerHTML = `
+    <div class="panel-header">
+      <span class="big-icon">${item.icon}</span>
+      <div class="info">
+        <h2>${qty > 1 ? qty + " × " : ""}${item.name}</h2>
+        <div class="note">${item.note}</div>
+      </div>
+    </div>
+    <div class="token-hero">
+      <div class="token-label">T O K E N S</div>
+      <div class="token-value" id="tokenValue">${fmtT(t)}</div>
+      <div class="token-unit">tokens</div>
+    </div>
+    <div class="duo-row">
+      <div class="duo-cell money">
+        <div class="cell-label">💰 费用</div>
+        <div class="cell-value">${fmtY(y)}</div>
+        <div class="cell-sub">API · ${model.name}</div>
+      </div>
+      <div class="duo-cell time">
+        <div class="cell-label">⏱ 时间</div>
+        <div class="cell-value">${calcTime(item, qty)}</div>
+        <div class="cell-sub">AI 生成耗时 · ${model.name}</div>
+      </div>
+    </div>
+    ${ioHTML}
+    ${p.isFixed ? `<div class="context-note" style="border-top:1px solid var(--gray-100);background:#faf5ff;">
+      <span class="bulb">🔒</span>
+      <span>此模态独立定价，不走文本 Token 计费体系，切换模型不影响费用。${item.cat==='media'?'图片/视频由专用生成模型（如 DALL·E、Sora）定价。':item.cat==='realtime'?'实时音频使用 Realtime API 独立计费，价格约为文字 Token 的 20 倍。':'基础设施成本与模型选择无关。'}</span>
+    </div>` : ''}
+    ${compHTML}
+  `;
+
+  // Trigger bar animation
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".bar-fill").forEach(el => {
+      const w = el.style.width;
+      el.style.width = "0%";
+      requestAnimationFrame(() => { el.style.width = w; });
+    });
+  });
+}
+
+/* ══════════ ACTIONS ══════════ */
+function setCat(id) {
+  currentCat = id;
+  renderCats();
+  renderGrid();
+}
+
+function selectItem(id) {
+  currentId = id;
+  qty = 1;
+  document.getElementById("qtyNum").textContent = 1;
+  document.querySelector(".qty-slider").value = 1;
+  renderGrid();
+  renderPanel();
+}
+
+function setQty(n) {
+  qty = Math.max(1, Math.min(999, n));
+  document.getElementById("qtyNum").textContent = qty;
+  document.querySelector(".qty-slider").value = Math.min(qty, 100);
+  renderPanel();
+}
+function changeQty(d) { setQty(qty + d); }
+
+function setModel(id) {
+  currentModel = id;
+  renderModels();
+  renderPanel();
+}
+
+/* ══════════ INIT ══════════ */
+renderCats();
+renderGrid();
+renderModels();
+renderPanel();
+</script>
+</body>
+</html>
